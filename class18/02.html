@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			#con{
+				width: 1000px;
+				height:450px;
+				border: solid 1px black;
+				margin-top: 20px;
+				display: flex;
+				justify-content: space-around;
+				flex-wrap: wrap;
+			}
+			#con div{
+				width: 200px;
+				height:200px;
+				border: solid 1px black;
+			}
+			#con button{
+				text-align: center;
+				width: 100%;
+				height: 30px;
+				margin-top: 10px;
+			}
+			P{
+				border: solid 1px black;
+				height: 80px;
+			}
+			p:nth-of-type(2){
+				height: 30px;
+				text-align: center;
+			}
+			.c{
+				background: purple;
+			}
+		</style>
+	</head>
+
+	<body>
+		<input type="text" placeholder="请输入你的心愿"/>
+		<button id="add">提交</button>
+		<div id="con"></div>
+	</body>
+	<script src="../class12/jquery-1.11.3.js"></script>
+	<script src="../ajax_v3.js封装/ajax_v3.js"></script>
+	<script type="text/javascript">
+		$("#add").click(function() {
+			ajax.get("http://localhost:8080/add", {
+				wish: $("input").val()
+			}).then((res) => {
+				console.log(res);
+				showPage();
+			})
+		})
+		showPage();
+
+		function showPage() {
+			ajax.get("http://localhost:8080/show").then((res) => {
+				console.log(res);
+				var data = JSON.parse(res);
+				var str = "";
+				for(var i = 0; i < data.length; i++) {
+					str += `<div>
+							<button onclick = "del('${data[i]._id}')">删除</button>
+							<p>${data[i].wish}<span>${changeTime(data[i].time)}</span></p>
+							<p onclick = "p1($(this),'${data[i]._id}')">√</p>
+						 </div>`
+				}
+				$("#con").html(str);
+			})
+		}
+		
+		function del (id) {
+			console.log(id)
+			ajax.get("http://localhost:8080/del",{
+				id
+			}).then((res)=>{
+				console.log(res);
+				showPage();
+			})
+		}
+		
+		function changeTime (time) {
+    		var time = time*1;
+    		var data = new Date(time);
+    		var str="年-月-日 时:分-秒";
+    		return str.replace("年",data.getFullYear())
+    		.replace("月",(data.getMonth()+1<10)?"0"+data.getMonth()+1:data.getMonth()+1)
+    		.replace("日",(data.getDate()<10)?"0"+data.getDate():data.getDate())
+    		.replace("时",(data.getHours()<10)?"0"+data.getHours():data.getHours())
+    		.replace("分",(data.getMinutes()<10)?"0"+data.getMinutes():data.getMinutes())
+    		.replace("秒",(data.getSeconds()<10)?"0"+data.getSeconds():data.getSeconds())
+    	}
+		
+		function p1 (p,id) {
+			p.addClass("c")
+			console.log(id)
+		}
+	</script>
+
+</html>
