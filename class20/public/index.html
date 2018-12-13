@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<style type="text/css">
+			* {
+				margin: 0;
+				padding: 0;
+			}
+			
+			header {
+				text-align: center;
+				padding: 5px 0;
+				background: orange;
+				color: red;
+			}
+			
+			figure {
+				display: flex;
+				align-items: center;
+			}
+			
+			figure:first-of-type {
+				border-bottom: solid 1px black;
+			}
+			
+			img {
+				width: 50%;
+				height: 120px;
+			}
+			
+			figcaption {
+				text-align: center;
+				width: 50%;
+				background: pink;
+				padding: 28px 0;
+			}
+			
+			button {
+				width: 20px;
+				height: 20px;
+				margin: 0 5px;
+			}
+			.mian span{
+				/*//visibility: hidden;*/
+				padding:0 10px ;
+			}
+			input{
+				text-align: center;
+				display: none;
+				width: 40px;
+			}
+			footer{
+				position: fixed;
+				bottom: 0;
+				width: 100%;
+				padding: 30px 0;
+				display: flex;
+				justify-content: space-between;
+				background:gainsboro;
+			}
+			footer button{
+				width: 150px;
+				height: 30px;
+				background: red;
+				border: none;
+				color: white;
+				
+			}
+			footer p{
+				padding: 5px 10px;
+				background: lightblue;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="con">
+			<header>
+				<h3>菜单</h3>
+			</header>
+			<div class="mian">
+			</div>
+			<footer>
+				<p></p>
+				<p></p>
+				<button id="end">结算</button>
+			</footer>
+		</div>
+	</body>
+	<script src="./js/ajax_v3.js"></script>
+	<script src="./js/jquery-1.11.3.min.js"></script>
+	<script src="./js/touch.js"></script>
+	<script type="text/javascript">
+		function showPage() {
+			ajax.get("http://localhost:8080/show").then((res) => {
+				var data = JSON.parse(res);
+				var str = "";
+				for(var i = 0; i < data.length; i++) {
+					str += ` <figure>
+					   <img src="img/${data[i].imgUrl}" />
+					 <figcaption>
+						<p>${data[i].foodsName}</p>
+						<p>${data[i].foodsPrice}</p>
+						<p><button onclick="sub($(this),'${data[i]._id}')">-</button><span class="sp">${data[i].num}</span><input type="text" _id='${data[i]._id}' value="" /><button onclick="add($(this),'${data[i]._id}')">+</button>
+					 </figcaption> 
+					</figure>`
+				}
+
+				$(".mian").html(str);
+				total();
+			})
+		}
+		showPage();
+        //+操作
+		function add(p, id) {
+			p.prev().prev()[0].innerHTML++;
+			p.prop("disabled", "disabled")
+			//p.prev().css("visibility","visible").prev().css("visibility","visible")
+			ajax.get("http://localhost:8080/add", {
+				id,
+				num:p.prev().prev().html()
+			}).then((res) => {
+				console.log(res);
+				p.prop("disabled", "")
+				showPage() 
+			})
+		}
+		//-操作
+		function sub (p,id) {
+			p.prop("disabled","disabled")
+			if(p.next()[0].innerHTML<1){
+				p.css("visibility","hidden").next().css("visibility","hidden");
+			}else{
+			    p.next()[0].innerHTML--;
+			    ajax.get("http://localhost:8080/sub",{
+			    	id,
+			    	num:p.next().html()
+			    }).then((res)=>{
+			    	console.log(res);
+				    p.prop("disabled","");
+				    showPage() 
+			    })
+			}
+		}
+		
+		
+		$(".mian").on("doubletap",".sp",function () {
+			$(this).next().show();
+			$(this).hide();
+			
+			$(this).next().on("blur",function () {
+				var id = $(this).attr("_id");
+				console.log(id);
+				var num = $(this).val();
+				console.log(num)
+				$(this).prev().html(num);
+				ajax.get("http://localhost:8080/doub",{
+					id,
+					num
+				}).then((res)=>{
+					console.log(res);
+					$(this).hide();
+			        $(this).prev().show();
+				})
+			})
+		})
+		function total () {
+			ajax.get("http://localhost:8080/total").then((res)=>{
+				var data = JSON.parse(res)
+				console.log(data);
+				$("footer p").eq(0).html(data.num);
+				$("footer p").eq(1).html(data.total);
+				if ($("footer p").eq(1).html()>50) {
+				 $("#end").html("去结算");
+			}else{
+				var money = 50 - $("footer p").eq(1).html()*1;
+				$("#end").html("还差"+money+"元才能结算");
+				$("#end").prop("disabled","disabled");
+			}
+			})
+		}
+			
+	</script>
+
+</html>
